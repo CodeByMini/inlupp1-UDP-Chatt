@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="inlupp1 UDP Chatt:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/inlupp1_UDP_Chatt_jar</output-path>
+    <root id="archive" name="inlupp1 UDP Chatt.jar">
+      <element id="module-output" name="inlupp1 UDP Chatt" />
+    </root>
+  </artifact>
+</component>
