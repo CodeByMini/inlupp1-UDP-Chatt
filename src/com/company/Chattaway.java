@@ -4,55 +4,53 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
-//import java.util.Scanner;
 
 public class Chattaway {
 
-    public static synchronized void SendMessage(Model model, UDPChatt udpChatt, User user, MulticastSocket socket) {
-        if (model.GetNewMessageStatus()) {
-            String message;
-            message = model.inText;//scanner.nextLine();
-            message = user.GetName() + ": " + message + "\n";
+    public static void SendMessage(View view, UDPChatt udpChatt, User user, MulticastSocket socket, String message) {
+        if(message != null){
+            message = user.GetName() + message + "\n";
             udpChatt.SendPacket(socket, message);
-            model.SetNewMessageStatus(false);
-            //}
+        }else{
+            if (view.GetNewMessageStatus()) {
+                message = view.inText;
+                message = user.GetName() + ": " + message + "\n";
+                udpChatt.SendPacket(socket, message);
+                view.SetNewMessageStatus(false);
+            }
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        User user = new User(JOptionPane.showInputDialog("Skriv ditt namn: "));
-        Model model = new Model(user.GetName());
 
-        //Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) throws InterruptedException, UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        User user = new User(JOptionPane.showInputDialog("Skriv ditt namn: "));
+        View view = new View(user.GetName());
 
         try {
             UDPChatt udpChatt = new UDPChatt("234.0.0.0", 1234);
             MulticastSocket socket = new MulticastSocket(udpChatt.GetPort());
-            Thread listeningThread = new Thread(new Reader(udpChatt.GetInetAddress(), udpChatt.GetPort(), socket, model));
 
-            if (!model.GetConnectedStatus()) {
-                socket.joinGroup(udpChatt.GetInetAddress());
-                model.SetConnectedStatus(true);
-                listeningThread.start();
-            }
-            //Thread connectionThread = new Thread(new ConnectionStatus(socket, model, udpChatt));
-            //connectionThread.start();
+            socket.joinGroup(udpChatt.GetInetAddress());
+            view.SetConnectedStatus(true);
+            SendMessage(view, udpChatt, user, socket, " connected to the chat");
+            Thread listeningThread = new Thread(new Reader(socket, view, udpChatt));
+            listeningThread.start();
 
             while (true) {
-                SendMessage(model, udpChatt, user, socket);
-                if (!model.GetConnectedStatus()) {
-                    listeningThread.interrupt();
+                if (!view.GetConnectedStatus()) {
+                    SendMessage(view, udpChatt, user, socket, " disconnected from the chat");
+                    view.textarea.append("You were disconnected from the chat");
                     socket.disconnect();
+                    listeningThread.interrupt();
                     break;
                 }
-
+                SendMessage(view, udpChatt, user, socket, null);
             }
-                } catch(UnknownHostException e){
-                    e.printStackTrace();
-                } catch(IOException e){
-                    e.printStackTrace();
-                }/* catch (InterruptedException e) {
+        } catch(UnknownHostException e){
             e.printStackTrace();
-        }*/
-            }
+        } catch(IOException e){
+            e.printStackTrace();
         }
+    }
+}

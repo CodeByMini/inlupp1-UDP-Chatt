@@ -1,20 +1,18 @@
 package com.company;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.*;
-import java.util.Scanner;
 
 public class UDPChatt extends Thread{
 
     private InetAddress inetAddress;
     private int port;
 
-
     UDPChatt(String inetAddress, int port) throws UnknownHostException {
-
         this.inetAddress = InetAddress.getByName(inetAddress);
         this.port = port;
-
     }
+
     public InetAddress GetInetAddress() {
         return this.inetAddress;
     }
@@ -32,6 +30,23 @@ public class UDPChatt extends Thread{
             e.printStackTrace();
         }
         return false;
+    }
+
+    public String GetPacket(MulticastSocket socket){
+        byte[] byteBuffer = new byte[256];
+        DatagramPacket packet = new DatagramPacket(byteBuffer, byteBuffer.length, this.inetAddress, this.port);
+        String message = null;
+        try {
+            socket.receive(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            message = new String(byteBuffer, 0, packet.getLength(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return message;
     }
 
 }

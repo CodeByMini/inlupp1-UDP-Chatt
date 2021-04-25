@@ -1,44 +1,35 @@
 package com.company;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Reader extends Thread {
 
-    private InetAddress inetAddress;
     private MulticastSocket socket;
-    private int port;
-    private Model model;
+     private View view;
+    private UDPChatt udpChatt;
 
 
-    Reader(InetAddress inetAddress, int port, MulticastSocket socket, Model model) throws UnknownHostException {
-        this.inetAddress = inetAddress;
-        this.port = port;
+    Reader(MulticastSocket socket, View view, UDPChatt udpChatt) throws UnknownHostException {
         this.socket = socket;
-        this.model = model;
+        this.view = view;
+        this.udpChatt = udpChatt;
     }
 
     @Override
     public void run() {
-        byte[] byteBuffer = new byte[256];
-        DatagramPacket packet = new DatagramPacket(byteBuffer, byteBuffer.length, this.inetAddress, this.port);
-        String message = null;
-        while (!Thread.interrupted()) {
-            try {
-                Thread.sleep(1);
-                socket.receive(packet);
-                message = new String(byteBuffer, 0, packet.getLength(), "UTF-8");
-                System.out.println(message);
-                this.model.textarea.append(message);
-            }
-            catch (InterruptedException e){
-                break;
-            }
-            catch (IOException e){
-                e.printStackTrace();
+        while(!Thread.interrupted()) {
+            String message;
+            message= udpChatt.GetPacket(socket);
+            String header =  new SimpleDateFormat("HH.mm.ss").format(new Date()) + " ";
+            if(view.GetConnectedStatus()){
+                view.textarea.append(header);
+                view.textarea.append(message);
+                view.textarea.setCaretPosition(view.textarea.getDocument().getLength());
+            }else{
+                socket.disconnect();
             }
         }
     }
